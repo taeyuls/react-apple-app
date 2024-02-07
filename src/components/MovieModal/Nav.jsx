@@ -30,7 +30,7 @@ const Nav = () => {
     onClick={() => (window.location.href = "/")}
   />
 </Logo>
-
+ 
     </NavWrapper>
   )
 }

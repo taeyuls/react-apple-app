@@ -1,111 +1,94 @@
-import React, { useEffect, useState } from 'react'
-import axios from '../../api/axios';
-import requests from '../../api/requests';
-import './Banner.css';
-import styled from 'styled-components';
+import React, { useEffect, useState } from "react";
+import instance from "../../api/axios";
+import "./Banner.css";
+import requests from "../../api/requests";
+import styled from "styled-components";
 
 const Banner = () => {
-
-const [movie, setMovie] = useState(null);
-const [isClicked,setIsClicked] = useState(false);
-
-useEffect(() => {
+  const [movie, setMovie] = useState(null);
+  const [isClicked, setIsClicked] = useState(false);
+  useEffect(() => {
     fetchData();
-  }, [])
-  
-  const fetchData = async() => {
-    const Response = await axios.get(requests.fetchNowPlaying);
-    const movieId = Response.data.results[
-      Math.floor(Math.random() * Response.data.results.length)
-    ].id;
+  }, []);
+  const fetchData = async () => {
+    // 현재 상영중인 영화 정보를 가져오기
+    const response = await instance.get(requests.fetchNowPlaying);
 
-    //특정 영화의 더 상세한 정보를 가져오기 (비디오 정보도 포함)
-    const { data: movieDetail } = await axios.get(`movie/${movieId}`, {
-      params: { append_to_response: "videos" }
+    // 여러 영화 중 영화 하나의 id가져오기
+    const movieId =
+      response.data.results[
+        Math.floor(Math.random() * response.data.results.length)
+      ].id;
+    // 특정 영화의 더 상세한 정보를 가져옴
+    const { data: movieDetail } = await instance.get(`movie/${movieId}`, {
+      params: { append_to_response: "videos" },
     });
     setMovie(movieDetail);
-  }
-  
+    console.log(movieDetail);
+  };
   const truncate = (str, n) => {
     return str?.length > n ? str.substring(0, n) + "..." : str;
+  };
+  if (!movie) {
+    return <div>loading...</div>;
   }
 
-  if (!movie) {
-    return (
-      <div>
-      Loading...
-      </div>
-    ) 
-  } 
-  
-  if(!isClicked) {
+  if (!isClicked) {
     return (
       <div
         className="banner"
         style={{
-          backgroundImage: `url("https://image.tmdb.org/t/p/original${movie.backdrop_path}")`,
+          backgroundImage: `url("https://image.tmdb.org/t/p/original/${movie.backdrop_path}")`,
           backgroundPosition: "top center",
-          backgroundSize: 'cover'
-          
-        }}>
+          backgroundSize: "cover",
+        }}
+      >
         <div className="banner__contents">
-          <h1 className="banner__title" >
-            {movie.title || movie.name || movie.original_name }
+          <h1 className="banner__title">
+            {movie.title || movie.name || movie.original.name}
           </h1>
-          <div className='banner__buttons' >
-          {movie.videos?.results[0]?.key ?
-          <button className="banner__button play"
-            onClick={() => setIsClicked(true)}
-          >
-              Play
-          </button>
-          :null
-        }
+          <div className="banner__button">
+            {movie.videos?.results[0]?.key ? (
+              <button onClick={() => setIsClicked(true)}>Play</button>
+            ) : null}
           </div>
-          <p className='banner_description'>
-            {truncate(movie.overview, 100)}
-            </p>
+          <p className="banner__description">{truncate(movie.overview, 100)}</p>
         </div>
-        <div className='banner--fadeBottom'/>
+        <div className="banner-fadeBottom"></div>
       </div>
-      )  
+    );
   } else {
     return (
       <>
-      <Container>
-        <HomeContainer>
-        <Iframe src={`https://www.youtube.com/embed/${movie.videos.results[0].key}?control=0&autoplay=1&mute=1`} ></Iframe>
-        </HomeContainer>
-      </Container>
-      <button onClick={() => setIsClicked(false)}>
-        X
-      </button>
+        <Container>
+          <HomeContainer>
+            <Iframe
+              src={`https://www.youtube.com/embed/${movie.videos.results[0].key}?control=0&autoplay=1&mute=1`}
+            ></Iframe>
+          </HomeContainer>
+        </Container>
+        <button onClick={() => setIsClicked(false)}>X</button>
       </>
-    )
+    );
   }
-}
-
+};
 const Iframe = styled.iframe`
-width: 100%;
-height: 100%;
-z-index: -1;
-opacity: 0.65;
-border: none;;
-`
-
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  opacity: 0.65;
+  border: none;
+`;
 const Container = styled.div`
-display: flex;
-justify-content: center;
-align-items: center;
-flex-direction: colum;
-width: 100%;
-height: 100vh;
-`
-
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+`;
 const HomeContainer = styled.div`
-width: 100%;
-height: 100%;
-`
-
-
-export default Banner 
+  width: 100%;
+  height: 100%;
+`;
+export default Banner;
