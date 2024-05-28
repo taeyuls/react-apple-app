@@ -2,9 +2,10 @@ import { Outlet, Route, Routes } from "react-router-dom";
 import "./App.css";
 import Nav from "./components/MovieModal/Nav";
 import DetailPage from "./components/page/DetailPage";
-import MainPage from "./components/page/MainPage";
 import LoginPage from "./components/page/LoginPage";
+import MainPage from "./components/page/MainPage";
 import SearchPage from "./components/page/SearchPage";
+import SignupPage from "./components/page/SignupPage";
 
 const Layout = () => {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="main" element={<MainPage />} />
           <Route path=":movieId" element={<DetailPage />} />
           <Route path="search" element={<SearchPage />} />
+          <Route path="signup" element={<SignupPage />} />
         </Route>
       </Routes>
     </>

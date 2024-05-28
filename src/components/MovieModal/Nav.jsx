@@ -1,28 +1,24 @@
+import {
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+} from "firebase/auth";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import {
-  getAuth,
-  signInWithPopup,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signOut,
-} from "firebase/auth";
-import app from "../../firebase";
+import { auth } from "../../firebase"; // firebase.js 파일에서 default와 auth 가져오기
 
 const Nav = () => {
   const [show, setShow] = useState(false);
   const [userData, setUserData] = useState(
-    localStorage.getItem("userData")
-      ? JSON.parse(localStorage.getItem("userData"))
-      : {}
+    () => JSON.parse(localStorage.getItem("userData")) || {}
   );
   const [searchValue, setSearchValue] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const { pathname } = location;
 
-  const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
 
   useEffect(() => {
@@ -41,14 +37,19 @@ const Nav = () => {
   }, []);
 
   useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserData(user);
+        localStorage.setItem("userData", JSON.stringify(user));
         navigate("/main");
       } else {
+        setUserData({});
+        localStorage.removeItem("userData");
         navigate("/");
       }
     });
+
+    return () => unsubscribe();
   }, [auth, navigate]);
 
   const handleChange = (e) => {
@@ -72,6 +73,7 @@ const Nav = () => {
       .then(() => {
         setUserData({});
         localStorage.removeItem("userData");
+        navigate("/");
       })
       .catch((error) => {
         alert(error.message);
@@ -91,20 +93,21 @@ const Nav = () => {
       {pathname === "/" ? (
         <Login onClick={handleAuth}>로그인</Login>
       ) : (
-        <input
+        <Input
           type="text"
-          className="nav__input"
           value={searchValue}
           onChange={handleChange}
           placeholder="영화를 검색해주세요."
         />
       )}
 
-      {pathname !== "/" && userData.photoURL && (
-        <SignOut onClick={handleOut}>
-          <UserImg src={userData.photoURL} alt={userData.displayName} />
-          <DropDown>로그아웃</DropDown>
-        </SignOut>
+      {pathname !== "/" && userData && (
+        <UserProfile>
+          {userData.photoURL && (
+            <UserImg src={userData.photoURL} alt={userData.displayName} />
+          )}
+          <LogoutButton onClick={handleOut}>로그아웃</LogoutButton>
+        </UserProfile>
       )}
     </NavWrapper>
   );
@@ -155,8 +158,7 @@ const NavWrapper = styled.nav`
   left: 0;
   right: 0;
   height: 70px;
-  background-color: ${(props) =>
-    props.$show === "true" ? "#090b13" : "#000000"};
+  background-color: ${(props) => (props.$show ? "#090b13" : "#000000")};
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -165,39 +167,33 @@ const NavWrapper = styled.nav`
   z-index: 3;
 `;
 
-const UserImg = styled.div`
-  border-radius: 50%;
-  width: 100%;
-  height: 100%;
-`;
-
-const DropDown = styled.div`
-  position: absolute;
-  top: 48px;
-  right: 0px;
-  background: rgb(19, 19, 19);
-  border: 1px solid rgba(151, 151, 151, 0.34);
-  padding: 10px;
-  font-size: 14px;
-  letter-spacing: 3px;
-  width: 100px;
-  opacity: 0;
-`;
-
-const SignOut = styled.div`
-  position: relative;
-  height: 48px;
-  width: 48px;
+const UserProfile = styled.div`
   display: flex;
-  cursor: pointer;
   align-items: center;
-  justify-content: center;
+`;
+
+const UserImg = styled.img`
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+`;
+
+const LogoutButton = styled.button`
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 8px 16px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  border: 1px solid #f9f9f9;
+  border-radius: 4px;
+  color: #f9f9f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
 
   &:hover {
-    ${DropDown} {
-      opacity: 1;
-      transition-duration: 1s;
-    }
+    background-color: #f9f9f9;
+    color: #000;
+    border-color: transparent;
   }
 `;
 
